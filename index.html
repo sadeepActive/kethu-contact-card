@@ -26,7 +26,9 @@
 
     /* Lock entire page to exactly one viewport — no scroll ever */
     html, body {
+      height: 100vh;     /* fallback for browsers without dvh support */
       height: 100dvh;
+      max-height: 100vh;
       max-height: 100dvh;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
@@ -34,15 +36,25 @@
 
     /* ═══════════════════════════════════════════
        FULL-PAGE BACKGROUND — kethu_background.png
+       Uses a fixed <div> instead of background-attachment:fixed
+       because fixed backgrounds are broken on iOS Safari & Android Chrome.
     ═══════════════════════════════════════════ */
     body {
-      background: url('kethu_background.png') center center / cover no-repeat fixed;
       position: relative;
     }
 
-    body::before {
-      content: '';
+    /* The actual background image layer */
+    .bg-layer {
       position: fixed;
+      inset: 0;
+      background: url('kethu_background.png') center center / cover no-repeat;
+      z-index: 0;
+    }
+
+    /* Dark atmospheric overlay on top of the background */
+    .bg-layer::after {
+      content: '';
+      position: absolute;
       inset: 0;
       background: linear-gradient(
         135deg,
@@ -50,7 +62,6 @@
         rgba(9, 18, 36, 0.76) 55%,
         rgba(6, 13, 24, 0.80) 100%
       );
-      z-index: 0;
     }
 
     /* ── Gold cinematic glow behind subject ── */
@@ -74,6 +85,7 @@
     .page {
       position: relative;
       z-index: 2;
+      height: 100vh;    /* fallback */
       height: 100dvh;
       overflow: hidden;
       display: flex;
@@ -330,9 +342,10 @@
       font-size: 14px;
       font-weight: 500;
       color: rgba(240, 235, 225, 0.90);
-      white-space: nowrap;
+      /* Allow text to wrap — critical for narrow cells in 2-column grid */
       overflow: hidden;
       text-overflow: ellipsis;
+      word-break: break-word;
     }
 
     /* ── WhatsApp inline chip ── */
@@ -513,37 +526,43 @@
       .page {
         flex-direction: column;
         align-items: stretch;
+        height: 100vh;   /* fallback */
         height: 100dvh;
       }
 
-      /* Photo — exactly 32% of viewport height */
+      /* Photo — 40% of viewport height — gives face more room */
       .photo-side {
         flex: none;
         width: 100%;
-        height: 32dvh;
+        height: 40vh;    /* fallback */
+        height: 40dvh;
         overflow: hidden;
       }
 
       .lawyer-photo {
         width: 100%;
         height: 100%;
+        object-fit: cover;
         object-position: top center;
-        /* on mobile: only fade bottom so face is fully visible */
-        mask-image: linear-gradient(to bottom, black 42%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, black 42%, transparent 100%);
+        /* Fade starts at 70% — face fully visible, only feet/bottom dissolve */
+        mask-image: linear-gradient(to bottom, black 68%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 68%, transparent 100%);
         mask-composite: unset;
         -webkit-mask-composite: unset;
       }
 
-      /* Content — exactly 68% of viewport height, no overflow */
+      /* Content — 60% of viewport height, scrollable if content overflows */
       .contact-side {
         flex: none;
         width: 100%;
-        height: 68dvh;
-        overflow: hidden;
+        height: 60vh;   /* vh fallback */
+        height: 60dvh;
+        overflow-x: hidden;
+        overflow-y: auto;                    /* scroll within panel, not full page */
+        -webkit-overflow-scrolling: touch;   /* smooth momentum scroll on iOS */
         margin-left: 0;
-        margin-top: -28px; /* slight overlap over photo fade */
-        padding: 12px 20px 10px;
+        margin-top: -24px; /* slight overlap over photo fade */
+        padding: 12px 20px 18px;
         align-items: flex-start;
       }
 
@@ -592,7 +611,8 @@
 
     /* Very small phones (SE, Moto) */
     @media (max-width: 380px) {
-      .contact-side  { padding: 10px 14px 8px; }
+      .photo-side    { height: 36vh; height: 36dvh; }
+      .contact-side  { height: 64vh; height: 64dvh; padding: 10px 14px 8px; }
       .lawyer-name   { font-size: 19px; }
       .ci-value      { font-size: 12px; }
       .btn           { padding: 9px 10px; font-size: 11px; }
@@ -600,6 +620,9 @@
   </style>
 </head>
 <body>
+
+  <!-- Fixed background image — avoids mobile background-attachment:fixed bug -->
+  <div class="bg-layer"></div>
 
   <div class="scene-glow"></div>
 
